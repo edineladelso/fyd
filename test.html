@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <title>fyd Backend Tester</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; padding: 2rem; }
+    input, button { padding: 0.5rem; margin: 0.5rem 0; width: 100%; max-width: 600px; }
+    select { padding: 0.5rem; margin-top: 0.5rem; }
+    .result { margin-top: 1rem; white-space: pre-wrap; font-family: monospace; background: #222; padding: 1rem; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>fyd Backend Tester</h1>
+
+  <input type="text" id="url" placeholder="Insere o link do vídeo ou playlist" />
+
+  <button onclick="send('video')">Sacar Vídeo MP4</button>
+  <button onclick="send('audio')">Sacar Áudio MP3</button>
+  <button onclick="send('playlist/video')">Sacar Playlist em MP4</button>
+  <button onclick="send('playlist/audio')">Sacar Playlist em MP3</button>
+  <button onclick="getFormats()">Listar Formatos</button>
+
+  <div id="formats-container" style="display: none;">
+    <select id="formatCode"></select>
+    <button onclick="downloadByFormat()">Sacar por Código</button>
+  </div>
+
+  <div class="result" id="result">...</div>
+
+  <script>
+    const backend = "http://localhost:3000/api";
+
+    function send(endpoint) {
+      const url = document.getElementById("url").value;
+      fetch(`${backend}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      }).then(async res => {
+        if (res.ok) {
+          const blob = await res.blob();
+          const a = document.createElement("a");
+          a.href = window.URL.createObjectURL(blob);
+          a.download = "media";
+          a.click();
+          result("Download completo.");
+        } else {
+          const json = await res.json();
+          result("Erro: " + JSON.stringify(json));
+        }
+      }).catch(e => result("Erro de rede: " + e.message));
+    }
+
+    function getFormats() {
+      const url = document.getElementById("url").value;
+      fetch(`${backend}/formats`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      }).then(res => res.json()).then(data => {
+        const select = document.getElementById("formatCode");
+        select.innerHTML = "";
+        data.formats.forEach(line => {
+          const opt = document.createElement("option");
+          opt.textContent = line;
+          if (/^\d+/.test(line)) {
+            opt.value = line.split(" ")[0];
+            select.appendChild(opt);
+          }
+        });
+        document.getElementById("formats-container").style.display = "block";
+        result("Formatos listados.");
+      }).catch(e => result("Erro ao listar formatos: " + e.message));
+    }
+
+    function downloadByFormat() {
+      const url = document.getElementById("url").value;
+      const formatCode = document.getElementById("formatCode").value;
+      fetch(`${backend}/formats/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, formatCode })
+      }).then(async res => {
+        if (res.ok) {
+          const blob = await res.blob();
+          const a = document.createElement("a");
+          a.href = window.URL.createObjectURL(blob);
+          a.download = "media";
+          a.click();
+          result("Download por código completo.");
+        } else {
+          const json = await res.json();
+          result("Erro: " + JSON.stringify(json));
+        }
+      }).catch(e => result("Erro de rede: " + e.message));
+    }
+
+    function result(msg) {
+      document.getElementById("result").textContent = msg;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <title>yt-dlp Test</title>
+</head>
+<body>
+  <h1>Testar Backend Node.js</h1>
+  <button onclick="enviarRequisicao()">Testar Download</button>
+
+  <script>
+    function enviarRequisicao() {
+      fetch('http://127.0.0.1:3000/api/video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' })
+      })
+      .then(response => response.text())
+      .then(data => alert('Resposta do servidor:\n' + data))
+      .catch(error => alert('Erro na requisição:\n' + error));
+    }
+  </script>
+</body>
+</html>
