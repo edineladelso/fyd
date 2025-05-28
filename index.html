@@ -17,8 +17,20 @@
         },
         body: JSON.stringify({ url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' })
       })
-      .then(response => response.text())
-      .then(data => alert('Resposta do servidor:\n' + data))
+      .then(response => {
+        if (!response.ok) throw new Error('Erro no download');
+        return response.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'video.mp4';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
       .catch(error => alert('Erro na requisição:\n' + error));
     }
   </script>
